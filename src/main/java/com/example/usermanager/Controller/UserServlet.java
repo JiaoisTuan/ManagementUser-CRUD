@@ -58,6 +58,12 @@ public class UserServlet extends HttpServlet {
                 case "delete":
                     deleteUser(request, response);
                     break;
+                case "search":
+                    searchUser(request, response);
+                    break;
+                case "sort":
+                    sortByName(request, response);
+                    break;
                 default:
                     listUser(request, response);
                     break;
@@ -71,6 +77,21 @@ public class UserServlet extends HttpServlet {
             throws SQLException, IOException, ServletException {
         List<User> listUser = userDAO.selectAllUsers();
         request.setAttribute("listUser", listUser);
+        RequestDispatcher dispatcher = request.getRequestDispatcher("user/list.jsp");
+        dispatcher.forward(request, response);
+    }
+
+    public void sortByName(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException, ServletException {
+        List<User> userSort = userDAO.sortByName();
+        request.setAttribute("listUser",userSort);
+        RequestDispatcher dispatcher = request.getRequestDispatcher("user/list.jsp");
+        dispatcher.forward(request,response);
+    }
+
+    public void searchUser(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException, ServletException {
+        String country = request.getParameter("country");
+        List<User> searchResult = userDAO.searchUser(country);
+        request.setAttribute("listUser", searchResult);
         RequestDispatcher dispatcher = request.getRequestDispatcher("user/list.jsp");
         dispatcher.forward(request, response);
     }

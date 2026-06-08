@@ -8,6 +8,16 @@
 <body>
 <center>
     <h1>User Management</h1>
+    <form action="users" method="get">
+        <input type="hidden" name="action" value="search">
+
+        <input type="text" name="country">
+
+        <input type="submit" value="Search">
+    </form>
+    <h3>
+        <a href="${pageContext.request.contextPath}/users?action=sort">Sort by name</a>
+    </h3>
     <h2>
         <a href="${pageContext.request.contextPath}/users?action=create">Add New User</a>
     </h2>

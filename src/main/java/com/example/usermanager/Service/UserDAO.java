@@ -16,6 +16,8 @@ public class UserDAO implements IUserDAO {
     private static final String SELECT_ALL_USERS = "select * from users";
     private static final String DELETE_USERS_SQL = "delete from users where id = ?;";
     private static final String UPDATE_USERS_SQL = "update users set name = ?,email= ?, country =? where id = ?;";
+    private static final String SREACH_USER_SQL = "SELECT * from users where country LIKE ?;";
+    private static final String SORT_USER_SQL = "SELECT * FROM users ORDER BY name ASC;";
 
     public UserDAO() {
     }
@@ -39,6 +41,7 @@ public class UserDAO implements IUserDAO {
 
         return connection;
     }
+
     public void insertUser(User user) throws SQLException {
         System.out.println(INSERT_USERS_SQL);
         try (Connection connection = getConnection(); PreparedStatement preparedStatement = connection.prepareStatement(INSERT_USERS_SQL)) {
@@ -67,7 +70,7 @@ public class UserDAO implements IUserDAO {
             }
 
         } catch (SQLException e) {
-            printSQLException (e);
+            printSQLException(e);
         }
         return user;
     }
@@ -86,11 +89,12 @@ public class UserDAO implements IUserDAO {
                 users.add(new User(id, name, email, country));
             }
         } catch (SQLException e) {
-            printSQLException (e);
+            printSQLException(e);
         }
         return users;
 
     }
+
 
     public boolean deleteUser(int id) throws SQLException {
         boolean rowDelete;
@@ -102,6 +106,26 @@ public class UserDAO implements IUserDAO {
 
         }
         return rowDelete;
+    }
+
+    public List<User> searchUser(String SearchCountry) {
+        List<User> user = new ArrayList<>();
+        try (Connection connection = getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(SREACH_USER_SQL);) {
+            preparedStatement.setString(1,"%" + SearchCountry + "%");
+            ResultSet rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String name = rs.getString("name");
+                String email = rs.getString("email");
+                String country = rs.getString("country");
+                user.add(new User(id, name, email, country));
+            }
+
+        } catch (SQLException e) {
+            printSQLException(e);
+        }
+        return user;
     }
 
     public boolean updateUser(User user) throws SQLException {
@@ -116,6 +140,27 @@ public class UserDAO implements IUserDAO {
         }
         return rowUpdate;
     }
+
+    public List<User> sortByName() {
+        List<User> users = new ArrayList<>();
+        try (Connection connection = getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(SORT_USER_SQL);) {
+            ResultSet rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String name = rs.getString("Name");
+                String email = rs.getString("email");
+                String country = rs.getString("country");
+                users.add(new User(id, name, email, country));
+            }
+
+
+        } catch (SQLException e) {
+            printSQLException(e);
+        }
+        return users;
+    }
+
     private void printSQLException(SQLException ex) {
         for (Throwable e : ex) {
             if (e instanceof SQLException) {
