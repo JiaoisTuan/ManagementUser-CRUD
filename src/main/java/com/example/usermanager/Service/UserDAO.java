@@ -19,6 +19,7 @@ public class UserDAO implements IUserDAO {
     private static final String SREACH_USER_SQL = "SELECT * from users where country LIKE ?;";
     private static final String SORT_USER_SQL = "SELECT * FROM users ORDER BY name ASC;";
 
+
     public UserDAO() {
     }
 
@@ -112,7 +113,7 @@ public class UserDAO implements IUserDAO {
         List<User> user = new ArrayList<>();
         try (Connection connection = getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(SREACH_USER_SQL);) {
-            preparedStatement.setString(1,"%" + SearchCountry + "%");
+            preparedStatement.setString(1, "%" + SearchCountry + "%");
             ResultSet rs = preparedStatement.executeQuery();
             while (rs.next()) {
                 int id = rs.getInt("id");
@@ -159,6 +160,39 @@ public class UserDAO implements IUserDAO {
             printSQLException(e);
         }
         return users;
+    }
+
+    @Override
+    public User getUserById(int id) {
+        User user = null;
+        String query = "{Call get_user_by_id(?)}";
+        try (Connection connection = getConnection();
+             CallableStatement callableStatement = connection.prepareCall(query)) {
+            callableStatement.setInt(1, id);
+            ResultSet rs = callableStatement.executeQuery();
+            while (rs.next()) {
+                String name = rs.getString("name");
+                String email = rs.getString("email");
+                String country = rs.getString("country");
+                user = new User(name, email, country);
+            }
+        } catch (SQLException ex) {
+            printSQLException(ex);
+        }
+        return user;
+    }
+
+    public void insertUserStore(User user) throws SQLException {
+        String query = "{CALL insert_user(?,?,?)}";
+        try (Connection connection = getConnection();
+             CallableStatement callableStatement = connection.prepareCall(query)) {
+            callableStatement.setString(1, user.getName());
+            callableStatement.setString(2, user.getEmail());
+            callableStatement.setString(3, user.getCountry());
+            callableStatement.executeUpdate();
+        } catch (SQLException ex) {
+            printSQLException(ex);
+        }
     }
 
     private void printSQLException(SQLException ex) {
