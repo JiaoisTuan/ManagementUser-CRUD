@@ -2,6 +2,7 @@ package com.example.usermanager.Controller;
 
 import java.io.*;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.example.usermanager.Model.User;
@@ -117,8 +118,28 @@ public class UserServlet extends HttpServlet {
         String name = request.getParameter("name");
         String email = request.getParameter("email");
         String country = request.getParameter("country");
+
+        String add = request.getParameter("add");
+        String edit = request.getParameter("edit");
+        String delete = request.getParameter("delete");
+        String view = request.getParameter("view");
+        List<Integer> permissions = new ArrayList<>();
+        if (add != null){
+            permissions.add(1);
+        }
+        if (edit != null){
+            permissions.add(2);
+        }
+        if (delete != null){
+            permissions.add(3);
+        }
+        if (view != null){
+            permissions.add(4);
+        }
+
         User newUser = new User(name, email, country);
-        userDAO.insertUserStore(newUser);
+        //userDAO.insertUser(newUser);
+        userDAO.addUserTransaction(newUser, permissions);
         RequestDispatcher dispatcher = request.getRequestDispatcher("user/create.jsp");
         dispatcher.forward(request, response);
     }

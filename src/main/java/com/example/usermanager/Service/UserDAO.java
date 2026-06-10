@@ -195,6 +195,89 @@ public class UserDAO implements IUserDAO {
         }
     }
 
+    public void addUserTransaction(User user, List<Integer> permissions) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        PreparedStatement pstmtAssignment = null;
+        ResultSet rs = null;
+        try {
+            // 1. Mở kết nối tới database
+            conn = getConnection();
+
+            // 2. Tắt tự động commit để bắt đầu transaction
+            conn.setAutoCommit(false);
+
+            // 3. Chuẩn bị câu SQL thêm user
+            // RETURN_GENERATED_KEYS dùng để lấy id tự tăng sau khi insert
+            pstmt = conn.prepareStatement(
+                    INSERT_USERS_SQL,
+                    Statement.RETURN_GENERATED_KEYS
+            );
+
+            // 4. Gán dữ liệu vào các dấu ?
+            pstmt.setString(1, user.getName());
+            pstmt.setString(2, user.getEmail());
+            pstmt.setString(3, user.getCountry());
+
+            // 5. Chạy INSERT user
+            int rowAffected = pstmt.executeUpdate();
+
+            // 6. Lấy id user vừa được database sinh ra
+            rs = pstmt.getGeneratedKeys();
+
+            int userId = 0;
+            if (rs.next()) {
+                userId = rs.getInt(1);
+            }
+
+            // 7. Nếu thêm user thành công
+            if (rowAffected == 1) {
+                String sqlPivot =
+                        "INSERT INTO user_permision(user_id, permision_id) VALUES (?, ?)";
+
+                pstmtAssignment = conn.prepareStatement(sqlPivot);
+
+                // 8. Duyệt từng quyền và insert vào bảng trung gian
+                for (int permisionId : permissions) {
+                    pstmtAssignment.setInt(1, userId);
+                    pstmtAssignment.setInt(2, permisionId);
+                    pstmtAssignment.executeUpdate();
+                }
+
+                // 9. Tất cả thành công thì lưu chính thức
+                conn.commit();
+
+            } else {
+                // 10. Nếu insert user không thành công thì hủy
+                conn.rollback();
+            }
+
+        } catch (SQLException ex) {
+            // 11. Nếu bất kỳ lỗi SQL nào xảy ra thì rollback
+            try {
+                if (conn != null) {
+                    conn.rollback();
+                }
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+
+            System.out.println(ex.getMessage());
+
+        } finally {
+            // 12. Đóng tài nguyên
+            try {
+                if (rs != null) rs.close();
+                if (pstmt != null) pstmt.close();
+                if (pstmtAssignment != null) pstmtAssignment.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+
+
     private void printSQLException(SQLException ex) {
         for (Throwable e : ex) {
             if (e instanceof SQLException) {
